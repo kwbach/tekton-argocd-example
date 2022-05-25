@@ -4,7 +4,7 @@ Blueprint for a Tekton + ArgoCD application setup.
 
 === Installation
 
-Requires a Kubernetes cluster with Istio installation.  Testing if NGINX Ingress Controller can be used instead.
+Requires a Kubernetes cluster with Istio installation.  Also testing if NGINX Ingress Controller can be used instead.
 This setup is being completed on a pre-existing bare-metal kubernetes cluster in a home lab.  The setup instructions
 are located here: https://drive.google.com/file/d/1-BddJ0GjK8oSMG0bqcPN7-dZCFhYJXa3/view?usp=sharing
 
@@ -43,8 +43,35 @@ EOM
 kubectl apply -f tekton-git-ssh-secret.yaml
 
 # create your Docker registry secret, for example:
+# find a docker config file with active login to registry
+cat ~/.docker/config.json | base64 -w 0
 kubectl create secret docker-registry regsecret
 --docker-server=https://index.docker.io/v1/ --docker-username=kbachman --docker-password=xxxxxx --docker-email=kbachman@gmail.com
+# paste the base64 value into the .dockercfg line of yaml
+# save the yaml in home directory, it will need to be tweaked and reapplied later
+
+----
+
+Add additional creds/configs if needed:
+
+----
+# GitHub PAT for git cli access on local machine
+1. github.com > Settings > Developer Settings > Personal access tokens > Generate new token > copy value
+# Run the following wizard to cache the token.  Install gh if it can't be found.
+2. gh auth login > GitHub.com > authenticate > HTTPS > enter token
+
+# Add connectivity info for another Kubernetes cluster
+1. Add a new config file to ~/.kube/
+2. Add the new config file to the KUBECONFIG env var.  Put it in ~/.zshrc so that it's auto set upon shell login.
+export KUBECONFIG=/Users/kevin/.kube/aws:/Users/kevin/.kube/home
+# reload the shell config file
+source ~/.zshrc
+
+# Point kubectl at a different cluster
+k config get-contexts
+k config use-context kubernetes
+
+----
 
 Setup the Tekton serviceaccount:
 
@@ -63,6 +90,7 @@ Install ArgoCD:
 ----
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# Wait for the pods to enter Running status before applying yamls
 kubectl apply -f argocd/
 kubectl apply -n systemtest -f regsecret.yaml
 kubectl apply -n production -f regsecret.yaml
@@ -71,12 +99,22 @@ kubectl apply -n production -f regsecret.yaml
 Login in ArgoCD, find out the admin password and create a token:
 
 ----
-# pod name is the admin password
-kubectl get pods -n argocd | grep argocd-server
+# Username = admin
+# Password (get with the command below, drop the trailing %)
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+# The password can be customized with this command, go to https://www.browserling.com/tools/bcrypt to generate a new hash
+kubectl -n argocd patch secret argocd-secret \
+  -p '{"stringData": {
+    "admin.password": "<put bcrypt hash here>",
+    "admin.passwordMtime": "'$(date +%FT%T%Z)'"
+  }}'
 
 # forward ports to access in browser
 kubectl -n argocd port-forward svc/argocd-server 8081:80
 kubectl -n tekton-pipelines port-forward svc/tekton-dashboard 9097:9097
+# expose these services externally by following these instructions
+https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#kubernetesingress-nginx
 ----
 
 Create ArgoCD access with Tekton:
