@@ -4,8 +4,9 @@ Blueprint for a Tekton + ArgoCD application setup.
 
 === Installation
 
-Requires a Kubernetes cluster with Istio installation.
-You can for example create one on the https://ibm.biz/cloud-reg-istio-ws[IBM Cloud^].
+Requires a Kubernetes cluster with Istio installation.  Testing if NGINX Ingress Controller can be used instead.
+This setup is being completed on a pre-existing bare-metal kubernetes cluster in a home lab.  The setup instructions
+are located here: https://drive.google.com/file/d/1-BddJ0GjK8oSMG0bqcPN7-dZCFhYJXa3/view?usp=sharing
 
 Install Tekton:
 
@@ -42,19 +43,8 @@ EOM
 kubectl apply -f tekton-git-ssh-secret.yaml
 
 # create your Docker registry secret, for example:
-cat ~/.docker/config.json | base64 -w 0
-cat > regsecret.yaml << EOM
-kind: Secret
-apiVersion: v1
-metadata:
-  name: regsecret
-data:
-  .dockercfg: <base 64 data>
-type: kubernetes.io/dockercfg
-EOM
-
-kubectl apply -n tekton-pipelines -f regsecret.yaml
-----
+kubectl create secret docker-registry regsecret
+--docker-server=https://index.docker.io/v1/ --docker-username=kbachman --docker-password=xxxxxx --docker-email=kbachman@gmail.com
 
 Setup the Tekton serviceaccount:
 
