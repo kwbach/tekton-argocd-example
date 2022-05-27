@@ -60,12 +60,19 @@ Add additional creds/configs if needed:
 # Run the following wizard to cache the token.  Install gh if it can't be found.
 2. gh auth login > GitHub.com > authenticate > HTTPS > enter token
 
+# Add a local host table entry for Kubernetes cluster
+sudo nano /private/etc/hosts
+
 # Add connectivity info for another Kubernetes cluster
-1. Add a new config file to ~/.kube/
-2. Add the new config file to the KUBECONFIG env var.  Put it in ~/.zshrc so that it's auto set upon shell login.
+1. Copy the ~/.kube/config file from the Kubernetes control-plane
+2. Add it to ~/.kube/ on the local system with a new file name
+3. Add the new config file to the KUBECONFIG env var.  Put it in ~/.zshrc so that it's auto set upon shell login.
 export KUBECONFIG=/Users/kevin/.kube/aws:/Users/kevin/.kube/home
 # reload the shell config file
 source ~/.zshrc
+# check and switch to the new context
+kubectl config get-contexts
+kubectl config use-context <new_config_filename>
 
 # Point kubectl at a different cluster
 k config get-contexts
