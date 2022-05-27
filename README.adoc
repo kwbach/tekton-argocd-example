@@ -120,8 +120,9 @@ kubectl -n argocd patch secret argocd-secret \
 # forward ports to access in browser
 kubectl -n argocd port-forward svc/argocd-server 8081:80
 kubectl -n tekton-pipelines port-forward svc/tekton-dashboard 9097:9097
-# expose these services externally by following these instructions
+# expose argocd externally by creating the let's encrypt ingress yaml shown here:
 https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#kubernetesingress-nginx
+# the same can be done for tekton endpoints, search the web for tekton ingress examples
 ----
 
 Create ArgoCD access with Tekton:
