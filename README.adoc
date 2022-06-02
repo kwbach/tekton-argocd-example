@@ -8,15 +8,15 @@ Requires a Kubernetes cluster with Istio installation.  Also testing if NGINX In
 This setup is being completed on a pre-existing bare-metal kubernetes cluster in a home lab.  The setup instructions
 are located here: https://drive.google.com/file/d/1-BddJ0GjK8oSMG0bqcPN7-dZCFhYJXa3/view?usp=sharing
 
-Install Tekton:
+Install Tekton
 
 ----
 kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
 ----
 
-Create secrets for SSH GitHub and Docker registry access:
+Create Secrets
 
-This is one way to create a SSH key, that will be added to GitHub.
+These are needed for SSH GitHub and Docker registry access.  This is one way to create a SSH key, that will be added to GitHub.
 There are in fact many ways for Tekton to get access to GitHub.
 
 ----
@@ -52,7 +52,7 @@ kubectl create secret docker-registry regsecret
 
 ----
 
-Add additional creds/configs if needed:
+Add Additional Configurations as Needed
 
 ----
 # GitHub PAT for git cli access on local machine
@@ -86,13 +86,13 @@ Setup the Tekton serviceaccount:
 kubectl apply -f tekton/
 ----
 
-Install the Tekton dashboard:
+Install the Tekton Dashboard:
 
 ----
 kubectl apply -f https://github.com/tektoncd/dashboard/releases/latest/download/tekton-dashboard-release.yaml
 ----
 
-Install ArgoCD:
+Install ArgoCD
 
 ----
 kubectl create namespace argocd
@@ -103,7 +103,7 @@ kubectl apply -n systemtest -f regsecret.yaml
 kubectl apply -n production -f regsecret.yaml
 ----
 
-Login in ArgoCD, find out the admin password and create a token:
+Login in ArgoCD, find out the admin password and create a token
 
 ----
 # Username = admin
@@ -125,7 +125,7 @@ https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#kubernetesingr
 # the same can be done for tekton endpoints, search the web for tekton ingress examples
 ----
 
-Create ArgoCD access with Tekton:
+Create ArgoCD Access with Tekton
 
 Under https://localhost:8081/settings/accounts/tekton generate a token.
 
@@ -140,6 +140,34 @@ Then you can execute the pipeline, manually:
 ----
 ./pipelinerun/trigger-pipeline.sh
 ----
+
+=== Testing Tasks and Pipelines
+
+====== Hello World Task
+----
+k apply -f https://raw.githubusercontent.com/kwbach/tekton-argocd-example/main/hello/task-hello.yaml
+k apply -f https://raw.githubusercontent.com/kwbach/tekton-argocd-example/main/hello/task-run-hello.yaml
+----
+The task can be executed a few ways:
+
+1.  kubectl create # use create instead of apply because of the auto-generated name
+2.  From the UI at TaskRuns > Name > Rerun
+3.  From the CLI: tkn task start echo-hello-world
+
+====== Print README Pipeline
+----
+# Add support for the git clone task on Tekton Hub
+kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-clone/0.6/git-clone.yaml
+
+# Apply the Pipeline and PipelineRun.  Applying the PipelineRun yaml will start the pipeline.
+k apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-clone/0.6/samples/git-clone-checking-out-a-branch.yaml
+----
+The pipeline can be executed a few ways:
+
+1.  kubectl create # use create instead of apply because of the auto-generated name
+2.  From the UI at PipelineRuns > Name > Rerun
+3.  From the CLI: tkn pipeline start cat-branch-readme
+
 
 === Tekton Triggers
 

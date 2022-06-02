@@ -17,6 +17,17 @@ spec:
   - name: config-source
 
   tasks:
+  - name: fetch-repo
+    taskRef:
+      name: git-clone
+    workspaces:
+      - name: app-source
+        workspace: config-source
+    params:
+      - name: url
+        value: $(params.repo-url)
+      - name: revision
+        value: $(params.branch-name)
   - name: build-java-app
     taskRef:
       name: build-java-app
