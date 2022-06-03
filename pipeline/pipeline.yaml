@@ -15,14 +15,15 @@ spec:
   workspaces:
   - name: app-source
   - name: config-source
+  - name: shared-data
 
   tasks:
   - name: fetch-repo
     taskRef:
       name: git-clone
     workspaces:
-      - name: app-source
-        workspace: config-source
+      - name: output
+        workspace: shared-data
     params:
       - name: url
         value: $(params.repo-url)
@@ -113,5 +114,5 @@ spec:
     workspaces:
     - name: app-source
       workspace: app-source
----
+
 
