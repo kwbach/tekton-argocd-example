@@ -97,7 +97,14 @@ Install ArgoCD
 ----
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-# Wait for the pods to enter Running status before applying yamls
+
+# Wait for the pods to enter Running status
+# Remove some network policies to avoid timeout errors on the UI and CLI
+kubectl delete networkpolicy argocd-repo-server-network-policy
+kubectl delete networkpolicy argocd-server-network-policy 
+kubectl delete networkpolicy argocd-redis-network-policy  
+
+# Apply customer argocd files
 kubectl apply -f argocd/
 kubectl apply -n systemtest -f regsecret.yaml
 kubectl apply -n production -f regsecret.yaml
