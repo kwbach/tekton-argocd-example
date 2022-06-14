@@ -31,6 +31,8 @@ spec:
       default: "false"
     - name: APP_IMAGE
       description: The name of where to store the app image.
+    - name: CONTAINER_IMAGE_REPO
+      description: The name of registry that stores the generated container image
     - name: SOURCE_URL
       description: A git repo url where the source code resides.
     - name: SOURCE_REFERENCE
@@ -68,23 +70,12 @@ spec:
           value: $(params.SOURCE_URL)
         - name: revision
           value: $(params.SOURCE_REFERENCE)
+        - name: imageRepo
+          value: $(params.CONTAINER_IMAGE_REPO)
       workspaces:
         - name: output
           workspace: source-ws
-    - name: get-commit-id
-      runAfter: ["fetch-from-git"]  # Wait until the clone is done before reading the commit id.
-      workspaces:
-        - name: source
-          workspace: source-ws
-      taskSpec:
-        workspaces:
-          - name: source
-        steps:
-          - image: zshusers/zsh:4.3.15
-            script: |
-              #!/usr/bin/env zsh
-              echo "PRINT COMMIT ID: "
-              cat /source/tmp/commit_id.txt
+
     - name: build-trusted
       runAfter:
         - fetch-from-git
@@ -103,7 +94,7 @@ spec:
         - name: BUILDER_IMAGE
           value: "$(params.BUILDER_IMAGE)"
         - name: APP_IMAGE
-          value: "$(params.APP_IMAGE)"
+          value: "$(params.CONTAINER_IMAGE_REPO):$(tasks.fetch-from-git.results.commit)"
         - name: SOURCE_SUBPATH
           value: "$(params.SOURCE_SUBPATH)"
         - name: PROCESS_TYPE
@@ -118,6 +109,7 @@ spec:
           value: "$(params.USER_ID)"
         - name: GROUP_ID
           value: "$(params.GROUP_ID)"
+
     - name: build-untrusted
       runAfter:
         - fetch-from-git
@@ -136,7 +128,7 @@ spec:
         - name: BUILDER_IMAGE
           value: "$(params.BUILDER_IMAGE)"
         - name: APP_IMAGE
-          value: "$(params.APP_IMAGE)"
+          value: "$(params.CONTAINER_IMAGE_REPO):$(tasks.fetch-from-git.results.commit)"
         - name: SOURCE_SUBPATH
           value: "$(params.SOURCE_SUBPATH)"
         - name: ENV_VARS

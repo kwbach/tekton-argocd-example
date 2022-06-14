@@ -52,6 +52,9 @@ spec:
       description: Revision to checkout. (branch, tag, sha, ref, etc...)
       type: string
       default: ""
+    - name: imageRepo
+      description: Container image registry
+      type: string
     - name: refspec
       description: Refspec to fetch before checking out revision.
       default: ""
@@ -108,6 +111,8 @@ spec:
   results:
     - name: commit
       description: The precise commit SHA that was fetched by this Task.
+    - name: imagename
+      description: The name of the container image generated from short commit id
     - name: url
       description: The precise URL that was fetched by this Task.
   steps:
@@ -120,6 +125,8 @@ spec:
           value: $(params.url)
         - name: PARAM_REVISION
           value: $(params.revision)
+        - name: PARAM_IMAGEREPO
+          value: $(params.imageRepo)
         - name: PARAM_REFSPEC
           value: $(params.refspec)
         - name: PARAM_SUBMODULES
@@ -218,12 +225,10 @@ spec:
           -depth="${PARAM_DEPTH}" \
           -sparseCheckoutDirectories="${PARAM_SPARSE_CHECKOUT_DIRECTORIES}"
         cd "${CHECKOUT_DIR}"
-        RESULT_SHA="$(git rev-parse HEAD)"
+        RESULT_SHA="$(git rev-parse --short HEAD)"
         EXIT_CODE="$?"
         if [ "${EXIT_CODE}" != 0 ] ; then
           exit "${EXIT_CODE}"
         fi
         printf "%s" "${RESULT_SHA}" > "$(results.commit.path)"
         printf "%s" "${PARAM_URL}" > "$(results.url.path)"
-        git rev-parse --short HEAD >> /tmp/commit_id.txt
-        cat /tmp/commit_id.txt

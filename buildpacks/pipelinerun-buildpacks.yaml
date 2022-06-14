@@ -13,7 +13,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: buildpacks-pipelinerun
+  generateName: buildpacks-pipelinerun-
   labels:
     app.kubernetes.io/description: PipelineRunTest
 spec:
@@ -26,7 +26,9 @@ spec:
     - name: TRUST_BUILDER
       value: "true"
     - name: APP_IMAGE
-      value: kbachman/kubernetes:1.1.1
+      value: ""
+    - name: CONTAINER_IMAGE_REPO
+      value: kbachman/kubernetes
     - name: SOURCE_URL
       value: https://github.com/kwbach/springboot_health
     - name: SOURCE_SUBPATH
