@@ -16,10 +16,12 @@ spec:
 
   workspaces:
     - name: source-ws
-      description: Location where source is stored.
+      description: Location where app code source is stored.
     - name: cache-ws
       description: Location where cache is stored if CACHE_IMAGE is not provided.
       optional: true
+    - name: config-source
+      description: Location where gitops config source is stored.
 
   params:
     - name: BUILDER_IMAGE
@@ -60,6 +62,13 @@ spec:
     - name: GROUP_ID
       description: The group ID of the builder image user.
       default: "1000"
+
+    - name: buildRevision
+      description: The revision of the build, i.e. the commit revision of the application repository
+    - name: appGitUrl
+      description: The application repository
+    - name: configGitUrl
+      description: The application config (GitOps) repository
 
   tasks:
     - name: fetch-from-git
@@ -143,3 +152,23 @@ spec:
           value: "$(params.USER_ID)"
         - name: GROUP_ID
           value: "$(params.GROUP_ID)"
+
+    - name: deploy-dev
+      taskRef:
+        name: deploy
+      runAfter:
+        - build-trusted
+      params:
+        - name: environment
+          value: dev
+        - name: argo-app-name
+          value: spring-health-check
+        - name: configGitUrl
+          value: $(params.configGitUrl)
+        - name: appImage
+          value: $(params.CONTAINER_IMAGE_REPO)
+        - name: buildRevision
+          value: $(tasks.fetch-from-git.results.commit)
+      workspaces:
+        - name: config-source
+          workspace: config-source

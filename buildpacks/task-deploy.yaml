@@ -26,15 +26,15 @@ spec:
     script: |
       #!/usr/bin/env sh
       set -e
-
+      ssh-keyscan -H github.com >> ~/.ssh/known_hosts
       eval $(ssh-agent)
       ssh-add ~/.ssh/id_*
       git config --global core.sshCommand 'ssh -o StrictHostKeyChecking=accept-new'
 
       git init
       git remote add origin $(params.configGitUrl)
-      git fetch --depth 1 origin master
-      git checkout master
+      git fetch --depth 1 origin main
+      git checkout main
 
   - name: update-yaml
     image: alpine/git:v2.26.2
@@ -44,10 +44,11 @@ spec:
       set -e
 
       echo "updating $(inputs.params.environment) image to $(inputs.params.appImage):$(inputs.params.buildRevision)"
-      sed -i "s#$(inputs.params.appImage):[a-zA-Z0-9]\\+#$(inputs.params.appImage):$(inputs.params.buildRevision)#" app.yaml
+      sed -i "s#$(inputs.params.appImage):[a-zA-Z0-9]\\+#$(inputs.params.appImage):$(inputs.params.buildRevision)#" deployment.yaml
 
-      echo "updating all pods in $(inputs.params.environment) to revision $(inputs.params.buildRevision)"
-      sed -i "s#revision: \"[a-zA-Z0-9]\\+\"#revision: \"$(inputs.params.buildRevision)\"#" app.yaml
+      # only needed when keeping track of revision in source yaml
+      #echo "updating all pods in $(inputs.params.environment) to revision $(inputs.params.buildRevision)"
+      #sed -i "s#revision: \"[a-zA-Z0-9]\\+\"#revision: \"$(inputs.params.buildRevision)\"#" deployment.yaml
 
   - name: commit-push-changes-gitops
     image: alpine/git:v2.26.2
@@ -55,14 +56,14 @@ spec:
     script: |
       #!/usr/bin/env sh
       set -e
-
+      ssh-keyscan -H github.com >> ~/.ssh/known_hosts
       git config --global user.email "tekton@tekton.dev"
       git config --global user.name "Tekton Pipeline"
       git add .
       git commit --allow-empty -m "[tekton] updating $(inputs.params.environment) image to $(inputs.params.buildRevision)"
       eval $(ssh-agent)
       ssh-add ~/.ssh/id_*
-      git push origin master
+      git push origin main
 
   - name: wait-for-argocd-rollout
     image: argoproj/argocd:v1.7.7
