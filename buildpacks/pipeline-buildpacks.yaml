@@ -85,7 +85,7 @@ spec:
         - name: output
           workspace: source-ws
 
-    - name: build-trusted
+    - name: build
       runAfter:
         - fetch-from-git
       taskRef:
@@ -119,45 +119,11 @@ spec:
         - name: GROUP_ID
           value: "$(params.GROUP_ID)"
 
-    - name: build-untrusted
-      runAfter:
-        - fetch-from-git
-      taskRef:
-        name: buildpacks-phases
-      when:
-        - input: "$(params.TRUST_BUILDER)"
-          operator: notin
-          values: ["true", "yes", "TRUE", "True"]
-      workspaces:
-        - name: source
-          workspace: source-ws
-        - name: cache
-          workspace: cache-ws
-      params:
-        - name: BUILDER_IMAGE
-          value: "$(params.BUILDER_IMAGE)"
-        - name: APP_IMAGE
-          value: "$(params.CONTAINER_IMAGE_REPO):$(tasks.fetch-from-git.results.commit)"
-        - name: SOURCE_SUBPATH
-          value: "$(params.SOURCE_SUBPATH)"
-        - name: ENV_VARS
-          value: ["$(params.ENV_VARS)"]
-        - name: PROCESS_TYPE
-          value: "$(params.PROCESS_TYPE)"
-        - name: RUN_IMAGE
-          value: "$(params.RUN_IMAGE)"
-        - name: CACHE_IMAGE
-          value: "$(params.CACHE_IMAGE)"
-        - name: USER_ID
-          value: "$(params.USER_ID)"
-        - name: GROUP_ID
-          value: "$(params.GROUP_ID)"
-
     - name: deploy-dev
       taskRef:
         name: deploy
       runAfter:
-        - build-trusted
+        - build
       params:
         - name: environment
           value: dev
